@@ -1,0 +1,452 @@
+substitutions:
+  name: sacolar5000
+  device_name: Sacolar #name for all sensors in Home assistant
+  device_description: "Esphome for sacolar5000"
+  modbus_controller_id: controller1
+  modbus_update_interval: 15s #normal update
+  skip_updates_slow: "6"  #how many times to skip normal update for slow updating sensors
+  update_fast: 15s
+  update_slow: 60s
+
+esphome:
+  name: ${name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "123456789"
+
+ota:
+  - platform: esphome
+    password: "123456789"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  manual_ip:
+    static_ip: 192.168.1.41
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Inverter Fallback Hotspot"
+    password: "123456789"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+uart:
+  id: mod_bus
+  tx_pin: 17
+  rx_pin: 16
+  baud_rate: 9600
+  stop_bits: 1
+ 
+modbus:
+  id: modbus1
+# flow_control_pin: 4 #for use when you use a rs485 board without auto flow control. Like the rs485 max board.
+ 
+modbus_controller:
+  - id: ${modbus_controller_id}
+    address: 0x1
+    modbus_id: modbus1
+    setup_priority: -10
+    update_interval: ${modbus_update_interval}
+
+sensor:
+  - platform: modbus_controller
+    name: ${device_name} status_code
+    skip_updates: $skip_updates_slow
+    address: 0
+    register_type: "read"
+    internal: true
+    accuracy_decimals: 0
+    id: status
+
+  - platform: modbus_controller
+    name: "${device_name} AC-Input-Power"
+    address: 36
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    icon: mdi:solar-power-variant
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+      - multiply: 0.1      
+  
+  - platform: modbus_controller
+    name: "${device_name} PV1-voltage"
+    address: 1
+    register_type: "read"
+    unit_of_measurement: V
+    device_class: voltage
+    icon: mdi:flash
+    value_type: U_WORD
+    accuracy_decimals: 0
+    filters:
+    - multiply: 0.1
+    
+  - platform: modbus_controller
+    name: "${device_name} PV1-power"
+    id: pv1_power
+    address: 4
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: current
+    icon: mdi:flash
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+
+    
+  - platform: modbus_controller
+    name: "${device_name} PV1-current"
+    address: 7
+    register_type: "read"
+    unit_of_measurement: A
+    device_class: current
+    icon: mdi:flash
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+
+
+  - platform: modbus_controller
+    name: "${device_name} Output-power"
+    address: 09
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: power
+    icon: mdi:solar-power
+    value_type: U_DWORD
+    accuracy_decimals: 0
+    filters:
+    - multiply: 0.1
+
+  - platform: modbus_controller
+    name: "${device_name} Output-current"
+    address: 34
+    register_type: "read"
+    unit_of_measurement: A
+    device_class: current
+    icon: mdi:flash
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1   
+
+  - platform: modbus_controller
+    name: "${device_name} Inverter-current"
+    address: 35
+    register_type: "read"
+    unit_of_measurement: A
+    device_class: current
+    icon: mdi:flash
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1   
+
+  - platform: modbus_controller
+    name: "${device_name} PV-Energy-today"
+    skip_updates: $skip_updates_slow
+    address: 48
+    register_type: "read"
+    unit_of_measurement: kWh
+    state_class: total_increasing
+    device_class: energy
+    icon: mdi:solar-power
+    value_type: U_DWORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+    
+  - platform: modbus_controller
+    name: "${device_name} PV1-Energy-total"
+    skip_updates: $skip_updates_slow
+    id: pv1_energy_total
+    address: 50
+    register_type: "read"
+    unit_of_measurement: kWh
+    state_class: total_increasing
+    device_class: energy
+    icon: mdi:solar-power
+    value_type: U_DWORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+    
+
+
+  - platform: modbus_controller
+    name: "${device_name} Battery-Discharging-Watt"
+    address: 73
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: power
+    icon: mdi:battery-arrow-down
+    value_type: U_DWORD
+    accuracy_decimals: 0
+    filters:
+    - multiply: 0.1       
+
+  - platform: modbus_controller
+    name: "${device_name} Battery Charging-Discharging Power"
+    address: 77
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: power
+    icon: mdi:battery-arrow-up-outline
+    value_type: U_DWORD
+    accuracy_decimals: 0
+    filters:
+    - multiply: 0.1     
+
+  - platform: modbus_controller
+    name: "${device_name} Battery-SoC"
+    skip_updates: $skip_updates_slow
+    address: 18
+    register_type: "read"
+    unit_of_measurement: "%"
+    icon: mdi:home-battery
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    name: "${device_name} Battery-Voltage"
+    skip_updates: $skip_updates_slow
+    address: 17
+    register_type: "read"
+    unit_of_measurement: V
+    device_class: voltage
+    icon: mdi:flash
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.01
+
+  - platform: modbus_controller
+    name: "${device_name} Bat-discharge-Energy-today "
+    address: 61
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    icon: mdi:transmission-tower-export
+    value_type: U_DWORD
+    accuracy_decimals: 0
+    filters:
+    - multiply: 0.1
+
+
+  - platform: modbus_controller
+    name: "${device_name} INV Power to Local Load Total"
+    address: 1037
+    register_type: "read"
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement    
+    icon: mdi:home-import-outline
+    value_type: U_DWORD
+    accuracy_decimals: 0
+    filters:
+    - multiply: 0.1
+
+  - platform: modbus_controller
+    name: "${device_name} Inverter-Temperature"
+    address: 25
+    register_type: "read"
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement    
+    icon: mdi:thermometer
+    skip_updates: $skip_updates_slow
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+
+  - platform: modbus_controller
+    name: "${device_name} DCDC-Temperature"
+    address: 26
+    register_type: "read"
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement    
+    icon: mdi:thermometer
+    skip_updates: $skip_updates_slow
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+
+    
+  - platform: modbus_controller
+    name: "${device_name} Energy to User Total"
+    skip_updates: $skip_updates_slow
+    address: 1046
+    register_type: "read"
+    unit_of_measurement: kWh
+    state_class: total_increasing
+    device_class: energy
+    icon: mdi:transmission-tower-export
+    value_type: U_DWORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+
+
+  - platform: modbus_controller
+    name: "${device_name} Battery-Discharge-Total"
+    skip_updates: $skip_updates_slow
+    address: 63
+    register_type: "read"
+    unit_of_measurement: kWh
+    state_class: total_increasing
+    device_class: energy
+    icon: mdi:battery-arrow-down
+    value_type: U_DWORD
+    accuracy_decimals: 1
+    filters:
+    - multiply: 0.1
+
+ 
+
+number:
+  - platform: modbus_controller
+    name: "${device_name} Discharge SoC"
+    address: 1071
+    value_type: U_WORD
+    min_value: 10
+    max_value: 100
+    step: 1
+    skip_updates: $skip_updates_slow
+
+  - platform: modbus_controller
+    name: "${device_name} Discharge Power Rate"
+    address: 1070
+    value_type: U_WORD
+    min_value: 10
+    max_value: 100
+    step: 1
+    skip_updates: $skip_updates_slow
+      
+  - platform: modbus_controller
+    name: "${device_name} Charge SoC"
+    address: 1091
+    value_type: U_WORD
+    min_value: 10
+    max_value: 100
+    step: 1
+    skip_updates: $skip_updates_slow
+
+  - platform: modbus_controller
+    name: "${device_name} Charge Power Rate"
+    address: 1090
+    value_type: U_WORD
+    min_value: 10
+    max_value: 100
+    step: 1   
+    skip_updates: $skip_updates_slow
+    
+select:
+  - platform: modbus_controller
+    name: "${device_name} AC Charging"
+    icon: mdi:battery-charging-100
+    address: 1092
+    value_type: U_WORD
+    optionsmap:
+      "Disabled": 0
+      "Enabled": 1
+    skip_updates: $skip_updates_slow
+
+  - platform: modbus_controller
+    name: "${device_name} Inverter Priority"
+    icon: mdi:arrow-decision-outline
+    address: 1044
+    value_type: U_WORD
+    optionsmap:
+      "Load First": 0
+      "Battery First": 1
+      "Grid First": 2  
+    skip_updates: $skip_updates_slow
+
+text_sensor:
+  - platform: template
+    name: "${device_name} Status state"
+    icon: mdi:eye
+    entity_category: diagnostic
+    lambda: |-
+      if ((id(status).state) == 1) {
+        return {"Normal"};
+      } else if ((id(status).state) == 0)  {
+        return {"Standby"};
+      } else if ((id(status).state) == 2)  {
+        return {"Discharge"};
+      } else if ((id(status).state) == 3)  {
+        return {"Fault"};
+      } else if ((id(status).state) == 4)  {
+        return {"Flash"};
+      } else if ((id(status).state) == 5)  {
+        return {"PV Charging"};
+      } else if ((id(status).state) == 6)  {
+        return {"AC Charging"};
+      } else if ((id(status).state) == 7)  {
+        return {"Combined Charging"};
+      } else if ((id(status).state) == 8)  {
+        return {"Combined Charging & Bypass"};
+      } else if ((id(status).state) == 9)  {
+        return {"PV Charging & Bypass"};
+      } else if ((id(status).state) == 10)  {
+        return {"AC Charging & Bypass"};
+      } else if ((id(status).state) == 11)  {
+        return {"Bypass"};
+      } else if (id(status).state == 12)  {
+        return {"PV Charge and Discharge"};
+      } else {
+        return {"Unknown"};
+      }
+
+  - platform: modbus_controller
+    name: "${device_name} Fault code"
+    skip_updates: $skip_updates_slow
+    address: 105
+    register_type: "read"
+    icon: mdi:eye
+    entity_category: diagnostic
+    raw_encode: HEXBYTES
+    lambda: |-
+      uint16_t value = modbus_controller::word_from_hex_str(x, 0);
+      switch (value) {
+        case 0:  return std::string("No error");
+        case 24: return std::string("Auto test failed");
+        case 25: return std::string("No AC connection");
+        case 26: return std::string("PV isolation low");
+        case 27: return std::string("Residual I high");
+        case 28: return std::string("Output high DCI");
+        case 29: return std::string("PV voltage high");
+        case 30: return std::string("AC voltage out of range");
+        case 31: return std::string("AC frequency out of range");
+        case 32: return std::string("Module too hot");
+        // case 1~23 " Error: 99+x
+        default: return std::string("Fault code: " + to_string(value));
+      }
+      return x;
