@@ -6,4 +6,4 @@ ESPHome component to monitor a inverter sacolar5000 (clone growatt) via UART-TTL
 3.Test wireless upload  
 4.Copy all content (make sure you have your wifi ssid&password in the secrets)  
 5.Edit the sensors in the config if you like  
-5.Upload wireless  
+5.Upload wireless or USB  
