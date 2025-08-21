@@ -1,5 +1,5 @@
 # Inverter sacolar-5000 In esphome
-ESPHome component to monitor a inverter sacolar5000 (clone growatt) via UART-TTL, reading inverter sacolar5000 data into Home Assistant via the modbus using a TTL to RS485 module and a ESP32. This setup completely eliminates the need to collect data via the cloud. Also, it is possible to increase the update frequency of the data. My sensors are updating every 15 sec.
+ESPHome component to monitor a inverter sacolar5000 (clone growatt) via UART-TTL, reading inverter sacolar5000 data into Home Assistant via the modbus using a TTL to RS485 module and a ESP32. This setup completely eliminates the need to collect data via the cloud. Also, it is possible to increase the update frequency of the data. My sensors are updating every 15 sec.  
 Link ttl used  https://amzn.eu/d/5ZO1Ku5
 # Installation
 1.Create your esp32 in esphome in home assistant         
